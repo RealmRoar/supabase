@@ -3,3 +3,6 @@
 
 ### Run Migrations
 1- Run `npx supabase migrate up`
+
+### Run tests
+1- Run `npx supabase test db`

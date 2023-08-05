@@ -1,1 +1,1 @@
-export * from "./databases/postgres.validator.ts";
+export * from "./databases/postgresDTO.validator.ts";

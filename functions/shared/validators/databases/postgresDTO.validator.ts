@@ -37,7 +37,7 @@ export class PostgresDTOValidator {
     }
 
     if (!hasStringProperty(table, "table")) {
-      throw new Error(`Invalid Table name: ${JSON.stringify(table)}`);
+      throw new Error(`Invalid Table name: ${JSON.stringify(table?.table)}`);
     }
 
     if (!Array.isArray(table.columns)) {

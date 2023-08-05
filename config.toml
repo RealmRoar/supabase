@@ -106,3 +106,9 @@ vector_port = 54328
 gcp_project_id = ""
 gcp_project_number = ""
 gcp_jwt_path = "supabase/gcloud.json"
+
+[auth.external.github]
+enabled = true
+client_id = "SUPABASE_AUTH_GITHUB_CLIENT_ID"
+secret = "SUPABASE_AUTH_GITHUB_SECRET"
+redirect_uri = "SUPABASE_AUTH_GITHUB_REDIRECT"

@@ -115,3 +115,20 @@ Deno.test("should throw error for invalid DatabaseSchemaDTO", async () => {
 
   await assertRejects(fnTest, Error, "Mocked Schema Error");
 });
+
+Deno.test(
+  "should return correct DatabaseSchemaDTO after insertion",
+  async () => {
+    const dispatch = new Dispatches(mockSupabase as unknown as SupabaseClient);
+
+    const sampleDTO: DatabaseSchemaDTO = {
+      name: "ReturnSchema",
+      database_name: DatabaseType.Postgres,
+      user_id: "return-user-id",
+    };
+
+    const result = await dispatch.insertDatabaseSchemaDTO(sampleDTO);
+
+    assertEquals(result, sampleDTO);
+  }
+);

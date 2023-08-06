@@ -1,5 +1,5 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
-import { DatabaseTableDTO } from "../dtos/index.ts";
+import { DatabaseTableDTO, DatabaseSchemaDTO } from "../dtos/index.ts";
 
 export class Dispatches {
   private supabase;
@@ -14,5 +14,20 @@ export class Dispatches {
     if (error) {
       throw error;
     }
+  }
+
+  async insertDatabaseSchemaDTO(
+    data: DatabaseSchemaDTO
+  ): Promise<DatabaseSchemaDTO> {
+    const { data: result, error } = await this.supabase
+      .from("schemas")
+      .insert([data])
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    return result[0];
   }
 }

@@ -61,7 +61,7 @@ Deno.test("should successfully insert DatabaseTableDTO", async () => {
     schema_id: "sample-schema-id",
   };
 
-  await dispatch.insertDatabaseTableDTO(sampleDTO);
+  await dispatch.insertDatabaseTableDTO([sampleDTO]);
 
   assertEquals(mockSupabase.from.calls.length, 1);
   assertEquals(mockSupabase.from.calls[0].args, ["tables"]);
@@ -78,7 +78,7 @@ Deno.test("should throw error for invalid data", () => {
   };
 
   const fnTest = async () => {
-    await dispatch.insertDatabaseTableDTO(errorDTO);
+    await dispatch.insertDatabaseTableDTO([errorDTO]);
   };
 
   assertRejects(fnTest, Error, "Mocked Error");

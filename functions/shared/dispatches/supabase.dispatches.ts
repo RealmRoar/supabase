@@ -8,8 +8,8 @@ export class SupabaseDispatches {
     this.supabase = supabaseInstance;
   }
 
-  async insertDatabaseTableDTO(data: DatabaseTableDTO): Promise<void> {
-    const { error } = await this.supabase.from("tables").insert([data]);
+  async insertDatabaseTableDTO(data: DatabaseTableDTO[]): Promise<void> {
+    const { error } = await this.supabase.from("tables").insert(data);
 
     if (error) {
       throw error;

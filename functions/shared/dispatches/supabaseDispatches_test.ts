@@ -4,7 +4,7 @@ import {
 } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 import { spy } from "https://deno.land/x/mock@0.15.2/mod.ts";
-import { Dispatches } from "./supabase.dispatches.ts";
+import { SupabaseDispatches } from "./index.ts";
 import {
   DatabaseTableDTO,
   DatabaseSchemaDTO,
@@ -52,7 +52,7 @@ const mockSupabase = {
 };
 
 Deno.test("should successfully insert DatabaseTableDTO", async () => {
-  const dispatch = new Dispatches(mockSupabase as unknown as SupabaseClient);
+  const dispatch = new SupabaseDispatches(mockSupabase as unknown as SupabaseClient);
 
   const sampleDTO: DatabaseTableDTO = {
     name: "SampleTable",
@@ -68,7 +68,7 @@ Deno.test("should successfully insert DatabaseTableDTO", async () => {
 });
 
 Deno.test("should throw error for invalid data", () => {
-  const dispatch = new Dispatches(mockSupabase as unknown as SupabaseClient);
+  const dispatch = new SupabaseDispatches(mockSupabase as unknown as SupabaseClient);
 
   const errorDTO: DatabaseTableDTO = {
     name: "ErrorTable",
@@ -85,7 +85,9 @@ Deno.test("should throw error for invalid data", () => {
 });
 
 Deno.test("should successfully insert DatabaseSchemaDTO", async () => {
-  const dispatch = new Dispatches(mockSupabase as unknown as SupabaseClient);
+  const dispatch = new SupabaseDispatches(
+    mockSupabase as unknown as SupabaseClient
+  );
 
   const sampleDTO: DatabaseSchemaDTO = {
     name: "SampleSchema",
@@ -101,7 +103,9 @@ Deno.test("should successfully insert DatabaseSchemaDTO", async () => {
 });
 
 Deno.test("should throw error for invalid DatabaseSchemaDTO", async () => {
-  const dispatch = new Dispatches(mockSupabase as unknown as SupabaseClient);
+  const dispatch = new SupabaseDispatches(
+    mockSupabase as unknown as SupabaseClient
+  );
 
   const errorDTO: DatabaseSchemaDTO = {
     name: "ErrorSchema",
@@ -119,7 +123,9 @@ Deno.test("should throw error for invalid DatabaseSchemaDTO", async () => {
 Deno.test(
   "should return correct DatabaseSchemaDTO after insertion",
   async () => {
-    const dispatch = new Dispatches(mockSupabase as unknown as SupabaseClient);
+    const dispatch = new SupabaseDispatches(
+      mockSupabase as unknown as SupabaseClient
+    );
 
     const sampleDTO: DatabaseSchemaDTO = {
       name: "ReturnSchema",

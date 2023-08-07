@@ -1,7 +1,7 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 import { DatabaseTableDTO, DatabaseSchemaDTO } from "../dtos/index.ts";
 
-export class Dispatches {
+export class SupabaseDispatches {
   private supabase;
 
   constructor(supabaseInstance: SupabaseClient) {

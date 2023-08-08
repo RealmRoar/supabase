@@ -112,3 +112,15 @@ enabled = true
 client_id = "env(SUPABASE_AUTH_GITHUB_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_GITHUB_SECRET)"
 redirect_uri = "env(SUPABASE_AUTH_GITHUB_REDIRECT)"
+
+[auth.external.gitlab]
+enabled = true
+client_id = "env(SUPABASE_AUTH_GITLAB_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_GITLAB_SECRET)"
+redirect_uri = "env(SUPABASE_AUTH_GITLAB_REDIRECT)"
+
+[auth.external.bitbucket]
+enabled = true
+client_id = "env(SUPABASE_AUTH_BITBUCKET_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_BITBUCKET_SECRET)"
+redirect_uri = "env(SUPABASE_AUTH_BITBUCKET_REDIRECT)"

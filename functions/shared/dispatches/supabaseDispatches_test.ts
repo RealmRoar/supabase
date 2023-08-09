@@ -43,6 +43,26 @@ const mockSupabase = {
               }),
             };
           }),
+          select: spy(() => {
+            return {
+              eq: spy((_column: string, value: string) => {
+                return {
+                  single: spy(() => {
+                    if (value === "ErrorSchemaId") {
+                      return Promise.resolve({
+                        error: new Error("Mocked Schema Error"),
+                      });
+                    }
+                    return Promise.resolve({
+                      data: lastInsertedDataSchema
+                        ? lastInsertedDataSchema[0]
+                        : null,
+                    });
+                  }),
+                };
+              }),
+            };
+          }),
         };
 
       default:
@@ -136,5 +156,40 @@ Deno.test(
     const result = await dispatch.insertDatabaseSchemaDTO(sampleDTO);
 
     assertEquals(result, sampleDTO);
+  }
+);
+
+Deno.test("should successfully retrieve DatabaseSchemaDTO by id", async () => {
+  const dispatch = new SupabaseDispatches(
+    mockSupabase as unknown as SupabaseClient
+  );
+
+  const sampleDTO: DatabaseSchemaDTO = {
+    name: "RetrieveSchema",
+    database_name: DatabaseType.Postgres,
+    user_id: "retrieve-user-id",
+  };
+
+  lastInsertedDataSchema = [sampleDTO];
+
+  const result = await dispatch.getDataBaseSchemaDTO(
+    "123e4567-e89b-12d3-a456-426614174000"
+  );
+
+  assertEquals(result, sampleDTO);
+});
+
+Deno.test(
+  "should throw error when trying to retrieve non-existent DatabaseSchemaDTO",
+  async () => {
+    const dispatch = new SupabaseDispatches(
+      mockSupabase as unknown as SupabaseClient
+    );
+
+    const fnTest = async () => {
+      await dispatch.getDataBaseSchemaDTO("ErrorSchemaId");
+    };
+
+    await assertRejects(fnTest, Error, "Mocked Schema Error");
   }
 );

@@ -30,4 +30,20 @@ export class SupabaseDispatches {
 
     return result[0];
   }
+
+  async getDataBaseSchemaDTO(
+    schemaId: string
+  ): Promise<DatabaseSchemaDTO | null> {
+    const { data, error } = await this.supabase
+      .from("schemas")
+      .select()
+      .eq("id", schemaId)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  }
 }

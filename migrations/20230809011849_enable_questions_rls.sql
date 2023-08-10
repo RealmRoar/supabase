@@ -1,10 +1,10 @@
-ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY conversations_user_policy 
-ON conversations 
+CREATE POLICY questions_user_policy 
+ON questions 
 FOR ALL 
-USING ((SELECT user_id FROM chats WHERE id = conversations.chat_id) = auth.uid())
-WITH CHECK ((SELECT user_id FROM chats WHERE id = conversations.chat_id) = auth.uid());
+USING ((SELECT user_id FROM chats WHERE id = questions.chat_id) = auth.uid())
+WITH CHECK ((SELECT user_id FROM chats WHERE id = questions.chat_id) = auth.uid());
 
 CREATE OR REPLACE FUNCTION check_chat_id() RETURNS TRIGGER AS $$
 BEGIN
@@ -16,6 +16,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER check_chat_id
-BEFORE INSERT ON conversations
+BEFORE INSERT ON questions
 FOR EACH ROW
 EXECUTE FUNCTION check_chat_id();

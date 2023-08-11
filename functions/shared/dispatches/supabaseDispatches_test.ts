@@ -172,7 +172,7 @@ Deno.test("should successfully retrieve DatabaseSchemaDTO by id", async () => {
 
   lastInsertedDataSchema = [sampleDTO];
 
-  const result = await dispatch.getDataBaseSchemaDTO(
+  const result = await dispatch.getDatabaseSchemaDTO(
     "123e4567-e89b-12d3-a456-426614174000"
   );
 
@@ -187,7 +187,7 @@ Deno.test(
     );
 
     const fnTest = async () => {
-      await dispatch.getDataBaseSchemaDTO("ErrorSchemaId");
+      await dispatch.getDatabaseSchemaDTO("ErrorSchemaId");
     };
 
     await assertRejects(fnTest, Error, "Mocked Schema Error");

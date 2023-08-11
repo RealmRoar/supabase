@@ -31,7 +31,7 @@ export class SupabaseDispatches {
     return result[0];
   }
 
-  async getDataBaseSchemaDTO(
+  async getDatabaseSchemaDTO(
     schemaId: string
   ): Promise<DatabaseSchemaDTO | null> {
     const { data, error } = await this.supabase
@@ -39,6 +39,21 @@ export class SupabaseDispatches {
       .select()
       .eq("id", schemaId)
       .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  }
+
+  async getdatabaseTableDTO(
+    schemaId: string
+  ): Promise<DatabaseTableDTO[] | null> {
+    const { data, error } = await this.supabase
+      .from("tables")
+      .select()
+      .eq("schema_id", schemaId);
 
     if (error) {
       throw error;

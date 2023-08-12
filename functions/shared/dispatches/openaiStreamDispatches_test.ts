@@ -5,7 +5,7 @@ import {
 } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import { OpenAIApi } from "https://cdn.skypack.dev/-/openai-edge@v1.2.2-cBgM4wwmhuT6rhqax2SI/dist=es2019,mode=imports/optimized/openai-edge.js";
 import { OpenAIPromptDTO } from "../dtos/index.ts";
-import { OpenAIDispatches } from "./openai.dispatches.ts";
+import { OpenAIStreamDispatches } from "./openaiStream.dispatches.ts";
 
 const mockOpenAI = {
   createChatCompletion: spy((prompt: OpenAIPromptDTO) => {
@@ -17,7 +17,7 @@ const mockOpenAI = {
 };
 
 Deno.test("should successfully get chat completion", async () => {
-  const dispatch = new OpenAIDispatches(mockOpenAI as unknown as OpenAIApi);
+  const dispatch = new OpenAIStreamDispatches(mockOpenAI as unknown as OpenAIApi);
 
   const sampleDTO: OpenAIPromptDTO = {
     model: "SampleModel",
@@ -33,7 +33,7 @@ Deno.test("should successfully get chat completion", async () => {
 });
 
 Deno.test("should throw error for invalid model", () => {
-  const dispatch = new OpenAIDispatches(mockOpenAI as unknown as OpenAIApi);
+  const dispatch = new OpenAIStreamDispatches(mockOpenAI as unknown as OpenAIApi);
 
   const errorDTO: OpenAIPromptDTO = {
     model: "ErrorModel",

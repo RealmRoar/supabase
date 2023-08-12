@@ -8,11 +8,13 @@ import { SupabaseDispatches } from "./index.ts";
 import {
   DatabaseTableDTO,
   DatabaseSchemaDTO,
+  DatabaseChatDTO,
   DatabaseType,
 } from "../dtos/index.ts";
 
 type InsertData = DatabaseTableDTO[];
 let lastInsertedDataSchema: DatabaseSchemaDTO[] | null = null;
+let lastInsertedDataChat: DatabaseChatDTO[] | null = null;
 const mockSupabase = {
   from: spy((tableName: string) => {
     switch (tableName) {
@@ -25,6 +27,7 @@ const mockSupabase = {
             return Promise.resolve({});
           }),
         };
+
       case "schemas":
         return {
           insert: spy((data: DatabaseSchemaDTO[]) => {
@@ -60,6 +63,26 @@ const mockSupabase = {
                     });
                   }),
                 };
+              }),
+            };
+          }),
+        };
+
+      case "chats":
+        return {
+          insert: spy((data: DatabaseChatDTO[]) => {
+            lastInsertedDataChat = data;
+            return {
+              select: spy(() => {
+                if (
+                  lastInsertedDataChat &&
+                  lastInsertedDataChat[0].title === "ErrorChat"
+                ) {
+                  return Promise.resolve({
+                    error: new Error("Mocked Chat Error"),
+                  });
+                }
+                return Promise.resolve({ data: lastInsertedDataChat });
               }),
             };
           }),
@@ -193,3 +216,37 @@ Deno.test(
     await assertRejects(fnTest, Error, "Mocked Schema Error");
   }
 );
+
+Deno.test("should successfully insert DatabaseChatDTO", async () => {
+  const dispatch = new SupabaseDispatches(
+    mockSupabase as unknown as SupabaseClient
+  );
+
+  const sampleDTO: DatabaseChatDTO = {
+    title: "SampleChat",
+    schema_id: "sample-schema-id",
+    tables: [],
+  };
+
+  const result = await dispatch.insertDatabaseChatDTO(sampleDTO);
+
+  assertEquals(result.title, "SampleChat");
+});
+
+Deno.test("should throw error for invalid DatabaseChatDTO", async () => {
+  const dispatch = new SupabaseDispatches(
+    mockSupabase as unknown as SupabaseClient
+  );
+
+  const errorDTO: DatabaseChatDTO = {
+    title: "ErrorChat",
+    schema_id: "error-schema-id",
+    tables: [],
+  };
+
+  const fnTest = async () => {
+    await dispatch.insertDatabaseChatDTO(errorDTO);
+  };
+
+  await assertRejects(fnTest, Error, "Mocked Chat Error");
+});

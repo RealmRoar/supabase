@@ -1,6 +1,7 @@
 CREATE TABLE chats (
     id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
     title varchar(255) NOT NULL,
+    tables jsonb NOT NULL,
     schema_id uuid NOT NULL,
     user_id uuid NOT NULL,
     created_at timestamp DEFAULT now(),

@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
 
+import { corsHeaders } from "../shared/cors.ts";
+
 import { PostgresDTO, DatabaseSchemaDTO } from "../shared/dtos/index.ts";
 import { PostgresDTOValidator, DatabaseSchemaDTOValidator } from "../shared/validators/index.ts";
 import { PostgresDTOTransformer } from "../shared/transformers/index.ts";
@@ -20,6 +22,10 @@ interface IRequestData {
 }
 
 serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   const body: IRequestData = await req.json();
   const { tables, schema } = body;
 

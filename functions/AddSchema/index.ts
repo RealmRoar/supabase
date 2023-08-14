@@ -39,23 +39,23 @@ serve(async (req: Request) => {
   }
 
   const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    Deno.env.get("SUPABASE_URL"),
+    Deno.env.get("SUPABASE_ANON_KEY"),
     {
       global: {
-        headers: { Authorization: req.headers.get("Authorization")! },
+        headers: { ...corsHeaders, Authorization: req.headers.get("Authorization")! },
       },
     }
   );
 
   const dispatches = new SupabaseDispatches(supabaseClient);
   const { id: schemaId } = await dispatches.insertDatabaseSchemaDTO(schema);
-  
+
   const transformer = new PostgresDTOTransformer(tables);
   const databaseTableDTO = transformer.transformToDatabaseTableDTO(schemaId!);
-  
+
   await dispatches.insertDatabaseTableDTO(databaseTableDTO);
-  return new Response(JSON.stringify(true), {
-    headers: { "Content-Type": "application/json" },
+  return new Response(JSON.stringify(schemaId), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });

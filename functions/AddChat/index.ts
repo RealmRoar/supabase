@@ -28,7 +28,7 @@ serve(async (req: Request) => {
     Deno.env.get("SUPABASE_ANON_KEY") ?? "",
     {
       global: {
-        headers: { Authorization: req.headers.get("Authorization")! },
+        headers: { ...corsHeaders, Authorization: req.headers.get("Authorization")! },
       },
     }
   );
@@ -40,7 +40,7 @@ serve(async (req: Request) => {
 
   if (!schema) {
     return new Response(JSON.stringify(false), {
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -91,6 +91,6 @@ serve(async (req: Request) => {
   const chat = await supabaseDispatches.insertDatabaseChatDTO(responseInitial);
 
   return new Response(JSON.stringify(chat), {
-    headers: { "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 })

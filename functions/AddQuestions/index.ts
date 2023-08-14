@@ -92,13 +92,13 @@ serve(async (req) => {
     model: "gpt-3.5-turbo",
     messages: [
       {
-        role: "user",
+        role: "system",
         content: message,
-      }
+      },
     ],
     max_tokens: 3000,
     temperature: 0.8,
-    stream: false
+    stream: false,
   };
 
   const apiKey: string | undefined = Deno.env.get("OPENAI_KEY");

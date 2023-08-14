@@ -17,6 +17,22 @@ import {
 function mountMessage(prompt: string, oldQuestion: DatabaseQuestionDTO, tables: DatabaseTableDTO[], schema: DatabaseSchemaDTO) {
   const hasOldQuestion = !!oldQuestion;
 
+  const minifyTables = tables.map((table) => {
+    return {
+      table_name: table.name,
+      columns: table.columns.map((column) => {
+        return {
+          column_name: column.name,
+        };
+      }),
+      indexes: table.indexes.map((index) => {
+        return {
+          index_name: index.name,
+        };
+      }),
+    };
+  });
+
   if (hasOldQuestion) {
     return `
       You are an artificial intelligence specialized in addressing data science challenges and assisting with SQL for the database ${schema.database_name}.\n\n
@@ -35,13 +51,15 @@ function mountMessage(prompt: string, oldQuestion: DatabaseQuestionDTO, tables: 
     }.\n\n
     Based on the user's question: ${prompt}\n\n
     And also, considering this schema, table name, columns, column types, and indexes in JSON format:\n\n
-    ${JSON.stringify(tables)}\n\n
+    ${JSON.stringify(minifyTables)}\n\n
 
     Please return the SQL in markdown code block format that addresses the user's request.\n\n
 
     Notes:\n\n
     - Try to leverage the provided indexes.\n\n
-    - Use only the SQL syntax that exists in the database ${schema.database_name}.\n\n
+    - Use only the SQL syntax that exists in the database ${
+      schema.database_name
+    }.\n\n
     - Avoid unnecessary chatter, focus on the SQL.\n\n
     - Before sending the SQL, add a lion's roar (rooooooar with random quantities of the letter o and a, but no more than 30 characters). For example, "Roooooar, here's your SQL:"\n\n
   `;

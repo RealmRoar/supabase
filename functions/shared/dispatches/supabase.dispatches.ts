@@ -132,14 +132,13 @@ export class SupabaseDispatches {
       .from("questions")
       .select()
       .eq("chat_id", chatId)
-      .order("created_at", { ascending: false })
-      .single();
+      .order("created_at", { ascending: false });
 
     if (error) {
       throw error;
     }
 
-    return data;
+    return data[0];
   }
 
   async getDatabaseTablesDTOByTabblesNameArray(

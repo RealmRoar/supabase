@@ -91,7 +91,6 @@ serve(async (req) => {
   const openAIPrompt: OpenAIPromptDTO = {
     model: "gpt-3.5-turbo",
     messages: [
-      ...oldQuestion?.prompt_agg ?? [],
       {
         role: "user",
         content: message,

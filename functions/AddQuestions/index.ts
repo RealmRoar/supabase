@@ -1,18 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
-import {
-  Configuration,
-  OpenAIApi,
-} from "https://cdn.skypack.dev/-/openai-edge@v1.2.2-cBgM4wwmhuT6rhqax2SI/dist=es2019,mode=imports/optimized/openai-edge.js";
-import {
-  OpenAIStream,
-  StreamingTextResponse
-} from "https://cdn.skypack.dev/-/ai@v2.1.33-o7ziWpkqDsk2J6hL5iGK/dist=es2019,mode=imports/optimized/ai.js";
 
 import { corsHeaders } from "../shared/cors.ts";
 import {
   SupabaseDispatches,
-  OpenAIStreamDispatches,
+  OpenAIHttpDispatches,
 } from "../shared/dispatches/index.ts";
 import {
   DatabaseChatDTO,
@@ -107,33 +99,22 @@ serve(async (req) => {
     ],
     max_tokens: 3000,
     temperature: 0.8,
-    stream: true
+    stream: false
   };
 
-  const config = new Configuration({
-    apiKey: Deno.env.get("OPENAI_KEY")!,
-  });
+  const apiKey: string | undefined = Deno.env.get("OPENAI_KEY");
+  const openaiDispatches = new OpenAIHttpDispatches(apiKey);
 
-  const openai = new OpenAIApi(config);
-
-  const openAIStreamDispatches = new OpenAIStreamDispatches(openai);
-  const response = await openAIStreamDispatches.chatCompletation(openAIPrompt);
-
-  const callback = {
-    onCompletion: async (response: string) => {
-      const question: DatabaseQuestionDTO = {
-        chat_id: chat.id!,
-        prompt: body.prompt,
-        output: response,
-      };
-
-      await supabaseDispatches.insertDatabaseQuestionDTO(question);
-    }
+  const response = await openaiDispatches.chatCompletation(openAIPrompt);
+  const question: DatabaseQuestionDTO = {
+    chat_id: chat.id!,
+    prompt: body.prompt,
+    output: response,
   };
 
-  const stream = OpenAIStream(response, callback);
+  await supabaseDispatches.insertDatabaseQuestionDTO(question);
 
-  return new StreamingTextResponse(stream, {
-    headers: corsHeaders,
+  return new Response(JSON.stringify(response), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });

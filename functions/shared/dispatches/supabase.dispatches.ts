@@ -1,5 +1,10 @@
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
-import { DatabaseTableDTO, DatabaseSchemaDTO, DatabaseChatDTO } from "../dtos/index.ts";
+import {
+  DatabaseTableDTO,
+  DatabaseSchemaDTO,
+  DatabaseChatDTO,
+  DatabaseQuestionDTO,
+} from "../dtos/index.ts";
 
 export class SupabaseDispatches {
   private supabase;
@@ -21,6 +26,21 @@ export class SupabaseDispatches {
   ): Promise<DatabaseSchemaDTO> {
     const { data: result, error } = await this.supabase
       .from("schemas")
+      .insert([data])
+      .select();
+
+    if (error) {
+      throw error;
+    }
+
+    return result[0];
+  }
+
+  async insertDatabaseQuestionDTO(
+    data: DatabaseQuestionDTO
+  ): Promise<DatabaseQuestionDTO> {
+    const { data: result, error } = await this.supabase
+      .from("questions")
       .insert([data])
       .select();
 
@@ -85,5 +105,55 @@ export class SupabaseDispatches {
     const { user } = data;
 
     return user?.id ?? "";
+  }
+
+  async getDatabaseChatDTO(id: string): Promise<DatabaseChatDTO | null> {
+    const { data, error } = await this.supabase
+      .from("chats")
+      .select()
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  }
+
+  async getDatabaseQuestionDTOByChatId(
+    chatId: string | undefined
+  ): Promise<DatabaseQuestionDTO | null> {
+    if (!chatId) {
+      return null;
+    }
+
+    const { data, error } = await this.supabase
+      .from("questions")
+      .select()
+      .eq("chat_id", chatId)
+      .order("created_at", { ascending: false })
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  }
+
+  async getDatabaseTablesDTOByTabblesNameArray(
+    tablesNameArray: string[]
+  ): Promise<DatabaseTableDTO[] | null> {
+    const { data, error } = await this.supabase
+      .from("tables")
+      .select()
+      .in("name", tablesNameArray);
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
   }
 }

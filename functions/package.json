@@ -1,0 +1,20 @@
+{
+  "name": "supabase-functions",
+  "version": "1.0.0",
+  "description": "Supabase functions migrated to Node.js",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "dev": "tsc -w"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

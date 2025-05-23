@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
+import express, { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+import { createClient } from "@supabase/supabase-js";
 
 import { corsHeaders } from "../shared/cors.ts";
 import {
@@ -70,19 +70,22 @@ interface IRequestData {
   prompt: string;
 }
 
-serve(async (req) => {
+const app = express();
+app.use(express.json()); // Middleware to parse JSON bodies
+
+app.all('/', async (req: ExpressRequest, res: ExpressResponse) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return res.status(200).set(corsHeaders).send("ok");
   }
 
-  const body: IRequestData = await req.json();
+  const body: IRequestData = req.body;
 
   const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    process.env.SUPABASE_URL ?? "",
+    process.env.SUPABASE_ANON_KEY ?? "",
     {
       global: {
-        headers: { Authorization: req.headers.get("Authorization")! },
+        headers: { Authorization: req.get("Authorization")! },
       },
     }
   );
@@ -90,7 +93,7 @@ serve(async (req) => {
   const supabaseDispatches = new SupabaseDispatches(supabaseClient);
   const chat: DatabaseChatDTO | null = await supabaseDispatches.getDatabaseChatDTO(body.chatId);
   if (!chat) {
-    return new Response("Chat not found", { status: 404 });
+    return res.status(404).set(corsHeaders).send("Chat not found");
   }
 
   const oldQuestion: DatabaseQuestionDTO | null =
@@ -119,7 +122,7 @@ serve(async (req) => {
     stream: false,
   };
 
-  const apiKey: string | undefined = Deno.env.get("OPENAI_KEY");
+  const apiKey: string | undefined = process.env.OPENAI_KEY;
   const openaiDispatches = new OpenAIHttpDispatches(apiKey);
 
   const response = await openaiDispatches.chatCompletation(openAIPrompt);
@@ -131,7 +134,10 @@ serve(async (req) => {
 
   await supabaseDispatches.insertDatabaseQuestionDTO(question);
 
-  return new Response(JSON.stringify(response), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  return res.status(200).set({ ...corsHeaders, "Content-Type": "application/json" }).json(response);
+});
+
+const port = parseInt(process.env.PORT || "8000");
+app.listen(port, () => {
+  console.log(`Function listening on port ${port}`);
 });

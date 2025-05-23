@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
+import express, { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+import { createClient } from "@supabase/supabase-js";
 
 import { corsHeaders } from "../shared/cors.ts";
 
@@ -21,29 +21,30 @@ interface IRequestData {
   schema: DatabaseSchemaDTO;
 }
 
-serve(async (req: Request) => {
+const app = express();
+app.use(express.json()); // Middleware to parse JSON bodies
+
+app.all('/', async (req: ExpressRequest, res: ExpressResponse) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return res.status(200).set(corsHeaders).send("ok");
   }
 
-  const body: IRequestData = await req.json();
+  const body: IRequestData = req.body;
   const { tables, schema } = body;
 
   // Validate
   try {
     validateData(tables, schema);
   } catch (error) {
-    return new Response(error.message, {
-      status: 422,
-    });
+    return res.status(422).set(corsHeaders).send(error.message);
   }
 
   const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL"),
-    Deno.env.get("SUPABASE_ANON_KEY"),
+    process.env.SUPABASE_URL ?? "",
+    process.env.SUPABASE_ANON_KEY ?? "",
     {
       global: {
-        headers: { ...corsHeaders, Authorization: req.headers.get("Authorization")! },
+        headers: { ...corsHeaders, Authorization: req.get("Authorization")! },
       },
     }
   );
@@ -55,7 +56,10 @@ serve(async (req: Request) => {
   const databaseTableDTO = transformer.transformToDatabaseTableDTO(schemaId!);
 
   await dispatches.insertDatabaseTableDTO(databaseTableDTO);
-  return new Response(JSON.stringify(schemaId), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  return res.status(200).set({ ...corsHeaders, "Content-Type": "application/json" }).json(schemaId);
+});
+
+const port = parseInt(process.env.PORT || "8000");
+app.listen(port, () => {
+  console.log(`Function listening on port ${port}`);
 });

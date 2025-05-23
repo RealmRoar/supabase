@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
+import express, { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+import { createClient } from "@supabase/supabase-js";
 import { corsHeaders } from "../shared/cors.ts";
 import { OpenAIHttpDispatches } from "../shared/dispatches/index.ts";
 import {
@@ -16,19 +16,22 @@ interface IRequestData {
   prompt: string;
 }
 
-serve(async (req: Request) => {
+const app = express();
+app.use(express.json()); // Middleware to parse JSON bodies
+
+app.all('/', async (req: ExpressRequest, res: ExpressResponse) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return res.status(200).set(corsHeaders).send("ok");
   }
 
-  const body: IRequestData = await req.json();
+  const body: IRequestData = req.body;
 
   const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+    process.env.SUPABASE_URL ?? "",
+    process.env.SUPABASE_ANON_KEY ?? "",
     {
       global: {
-        headers: { ...corsHeaders, Authorization: req.headers.get("Authorization")! },
+        headers: { ...corsHeaders, Authorization: req.get("Authorization")! },
       },
     }
   );
@@ -39,9 +42,7 @@ serve(async (req: Request) => {
     await supabaseDispatches.getDatabaseSchemaDTO(body.schemaId);
 
   if (!schema) {
-    return new Response(JSON.stringify(false), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return res.status(404).set({ ...corsHeaders, "Content-Type": "application/json" }).json({ error: "Schema not found" });
   }
 
   const tables: DatabaseTableDTO[] = await supabaseDispatches.getdatabaseTableDTO(
@@ -73,7 +74,7 @@ serve(async (req: Request) => {
     stream: false,
   };
 
-    const apiKey: string | undefined = Deno.env.get("OPENAI_KEY");
+    const apiKey: string | undefined = process.env.OPENAI_KEY;
     const openaiDispatches = new OpenAIHttpDispatches(apiKey);
 
   const response = await openaiDispatches.chatCompletation(openAIPrompt);
@@ -90,7 +91,10 @@ serve(async (req: Request) => {
 
   const chat = await supabaseDispatches.insertDatabaseChatDTO(responseInitial);
 
-  return new Response(JSON.stringify(chat), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-})
+  return res.status(200).set({ ...corsHeaders, "Content-Type": "application/json" }).json(chat);
+});
+
+const port = parseInt(process.env.PORT || "8000");
+app.listen(port, () => {
+  console.log(`Function listening on port ${port}`);
+});

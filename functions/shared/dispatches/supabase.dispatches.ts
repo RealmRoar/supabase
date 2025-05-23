@@ -1,4 +1,4 @@
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
+import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import {
   DatabaseTableDTO,
   DatabaseSchemaDTO,

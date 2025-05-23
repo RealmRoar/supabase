@@ -1,0 +1,8 @@
+{
+  "tasks": {
+    "check_deno_version": "deno --version | grep 2.3.3"
+  },
+  "compilerOptions": {
+    "noEmit": true
+  }
+}

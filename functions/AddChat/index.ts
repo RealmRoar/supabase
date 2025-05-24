@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
+import { createClient } from "@supabase/supabase-js";
 import { corsHeaders } from "../shared/cors.ts";
 import { OpenAIHttpDispatches } from "../shared/dispatches/index.ts";
 import {
@@ -41,6 +41,7 @@ serve(async (req: Request) => {
   if (!schema) {
     return new Response(JSON.stringify(false), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 404,
     });
   }
 
@@ -73,11 +74,11 @@ serve(async (req: Request) => {
     stream: false,
   };
 
-    const apiKey: string | undefined = Deno.env.get("OPENAI_KEY");
-    const openaiDispatches = new OpenAIHttpDispatches(apiKey);
+  const apiKey: string | undefined = Deno.env.get("OPENAI_KEY") ?? "";
+  const openaiDispatches = new OpenAIHttpDispatches(apiKey);
 
   const response = await openaiDispatches.chatCompletation(openAIPrompt);
-  const content = await JSON.parse(response);
+  const content = await JSON.parse(response); // Assuming chatCompletation returns a stringified JSON
 
   const userId = await supabaseDispatches.getUserIdAuth();
 
@@ -92,5 +93,6 @@ serve(async (req: Request) => {
 
   return new Response(JSON.stringify(chat), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200,
   });
 })

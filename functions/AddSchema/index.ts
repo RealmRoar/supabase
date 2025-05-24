@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
+import { createClient } from "@supabase/supabase-js";
 
 import { corsHeaders } from "../shared/cors.ts";
 
@@ -35,12 +35,13 @@ serve(async (req: Request) => {
   } catch (error) {
     return new Response(error.message, {
       status: 422,
+      headers: corsHeaders, // Ensure CORS headers on error responses
     });
   }
 
   const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL"),
-    Deno.env.get("SUPABASE_ANON_KEY"),
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
     {
       global: {
         headers: { ...corsHeaders, Authorization: req.headers.get("Authorization")! },
@@ -57,5 +58,6 @@ serve(async (req: Request) => {
   await dispatches.insertDatabaseTableDTO(databaseTableDTO);
   return new Response(JSON.stringify(schemaId), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200,
   });
 });

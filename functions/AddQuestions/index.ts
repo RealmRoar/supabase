@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.31.0";
+import { createClient } from "@supabase/supabase-js";
 
 import { corsHeaders } from "../shared/cors.ts";
 import {
@@ -14,7 +14,7 @@ import {
   OpenAIPromptDTO,
 } from "../shared/dtos/index.ts";
 
-function mountMessage(prompt: string, oldQuestion: DatabaseQuestionDTO, tables: DatabaseTableDTO[], schema: DatabaseSchemaDTO) {
+function mountMessage(prompt: string, oldQuestion: DatabaseQuestionDTO | null, tables: DatabaseTableDTO[], schema: DatabaseSchemaDTO) {
   const hasOldQuestion = !!oldQuestion;
 
   const minifyTables = tables.map((table) => {
@@ -70,7 +70,7 @@ interface IRequestData {
   prompt: string;
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -82,7 +82,7 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_ANON_KEY") ?? "",
     {
       global: {
-        headers: { Authorization: req.headers.get("Authorization")! },
+        headers: { ...corsHeaders, Authorization: req.headers.get("Authorization")! },
       },
     }
   );
@@ -90,7 +90,7 @@ serve(async (req) => {
   const supabaseDispatches = new SupabaseDispatches(supabaseClient);
   const chat: DatabaseChatDTO | null = await supabaseDispatches.getDatabaseChatDTO(body.chatId);
   if (!chat) {
-    return new Response("Chat not found", { status: 404 });
+    return new Response("Chat not found", { headers: corsHeaders, status: 404 });
   }
 
   const oldQuestion: DatabaseQuestionDTO | null =
@@ -104,7 +104,12 @@ serve(async (req) => {
   const schema: DatabaseSchemaDTO | null =
     await supabaseDispatches.getDatabaseSchemaDTO(chat.schema_id);
 
-  const message = mountMessage(body.prompt, oldQuestion!, tables!, schema!);
+  // Ensure tables and schema are not null before passing to mountMessage
+  if (!tables || !schema) {
+    return new Response("Required data for message mounting is missing.", { headers: corsHeaders, status: 500 });
+  }
+  
+  const message = mountMessage(body.prompt, oldQuestion, tables, schema);
   
   const openAIPrompt: OpenAIPromptDTO = {
     model: "gpt-3.5-turbo",
@@ -119,7 +124,7 @@ serve(async (req) => {
     stream: false,
   };
 
-  const apiKey: string | undefined = Deno.env.get("OPENAI_KEY");
+  const apiKey: string | undefined = Deno.env.get("OPENAI_KEY") ?? "";
   const openaiDispatches = new OpenAIHttpDispatches(apiKey);
 
   const response = await openaiDispatches.chatCompletation(openAIPrompt);
@@ -133,5 +138,6 @@ serve(async (req) => {
 
   return new Response(JSON.stringify(response), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200,
   });
 });

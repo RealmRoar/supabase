@@ -1,4 +1,4 @@
-import express, { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 
 import { corsHeaders } from "../shared/cors.ts";
@@ -14,7 +14,7 @@ import {
   OpenAIPromptDTO,
 } from "../shared/dtos/index.ts";
 
-function mountMessage(prompt: string, oldQuestion: DatabaseQuestionDTO, tables: DatabaseTableDTO[], schema: DatabaseSchemaDTO) {
+function mountMessage(prompt: string, oldQuestion: DatabaseQuestionDTO | null, tables: DatabaseTableDTO[], schema: DatabaseSchemaDTO) {
   const hasOldQuestion = !!oldQuestion;
 
   const minifyTables = tables.map((table) => {
@@ -70,22 +70,19 @@ interface IRequestData {
   prompt: string;
 }
 
-const app = express();
-app.use(express.json()); // Middleware to parse JSON bodies
-
-app.all('/', async (req: ExpressRequest, res: ExpressResponse) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return res.status(200).set(corsHeaders).send("ok");
+    return new Response("ok", { headers: corsHeaders });
   }
 
-  const body: IRequestData = req.body;
+  const body: IRequestData = await req.json();
 
   const supabaseClient = createClient(
-    process.env.SUPABASE_URL ?? "",
-    process.env.SUPABASE_ANON_KEY ?? "",
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
     {
       global: {
-        headers: { Authorization: req.get("Authorization")! },
+        headers: { ...corsHeaders, Authorization: req.headers.get("Authorization")! },
       },
     }
   );
@@ -93,7 +90,7 @@ app.all('/', async (req: ExpressRequest, res: ExpressResponse) => {
   const supabaseDispatches = new SupabaseDispatches(supabaseClient);
   const chat: DatabaseChatDTO | null = await supabaseDispatches.getDatabaseChatDTO(body.chatId);
   if (!chat) {
-    return res.status(404).set(corsHeaders).send("Chat not found");
+    return new Response("Chat not found", { headers: corsHeaders, status: 404 });
   }
 
   const oldQuestion: DatabaseQuestionDTO | null =
@@ -107,7 +104,12 @@ app.all('/', async (req: ExpressRequest, res: ExpressResponse) => {
   const schema: DatabaseSchemaDTO | null =
     await supabaseDispatches.getDatabaseSchemaDTO(chat.schema_id);
 
-  const message = mountMessage(body.prompt, oldQuestion!, tables!, schema!);
+  // Ensure tables and schema are not null before passing to mountMessage
+  if (!tables || !schema) {
+    return new Response("Required data for message mounting is missing.", { headers: corsHeaders, status: 500 });
+  }
+  
+  const message = mountMessage(body.prompt, oldQuestion, tables, schema);
   
   const openAIPrompt: OpenAIPromptDTO = {
     model: "gpt-3.5-turbo",
@@ -122,7 +124,7 @@ app.all('/', async (req: ExpressRequest, res: ExpressResponse) => {
     stream: false,
   };
 
-  const apiKey: string | undefined = process.env.OPENAI_KEY;
+  const apiKey: string | undefined = Deno.env.get("OPENAI_KEY") ?? "";
   const openaiDispatches = new OpenAIHttpDispatches(apiKey);
 
   const response = await openaiDispatches.chatCompletation(openAIPrompt);
@@ -134,10 +136,8 @@ app.all('/', async (req: ExpressRequest, res: ExpressResponse) => {
 
   await supabaseDispatches.insertDatabaseQuestionDTO(question);
 
-  return res.status(200).set({ ...corsHeaders, "Content-Type": "application/json" }).json(response);
-});
-
-const port = parseInt(process.env.PORT || "8000");
-app.listen(port, () => {
-  console.log(`Function listening on port ${port}`);
+  return new Response(JSON.stringify(response), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200,
+  });
 });

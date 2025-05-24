@@ -4,5 +4,10 @@
   },
   "compilerOptions": {
     "noEmit": true
+    // Add other Deno-specific compiler options if needed in the future,
+    // e.g., "jsx": "react-jsx", "jsxImportSource": "preact"
+  },
+  "imports": {
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@^2.49.8"
   }
 }

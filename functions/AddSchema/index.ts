@@ -1,4 +1,4 @@
-import express, { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
 
 import { corsHeaders } from "../shared/cors.ts";
@@ -21,30 +21,30 @@ interface IRequestData {
   schema: DatabaseSchemaDTO;
 }
 
-const app = express();
-app.use(express.json()); // Middleware to parse JSON bodies
-
-app.all('/', async (req: ExpressRequest, res: ExpressResponse) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return res.status(200).set(corsHeaders).send("ok");
+    return new Response("ok", { headers: corsHeaders });
   }
 
-  const body: IRequestData = req.body;
+  const body: IRequestData = await req.json();
   const { tables, schema } = body;
 
   // Validate
   try {
     validateData(tables, schema);
   } catch (error) {
-    return res.status(422).set(corsHeaders).send(error.message);
+    return new Response(error.message, {
+      status: 422,
+      headers: corsHeaders, // Ensure CORS headers on error responses
+    });
   }
 
   const supabaseClient = createClient(
-    process.env.SUPABASE_URL ?? "",
-    process.env.SUPABASE_ANON_KEY ?? "",
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_ANON_KEY") ?? "",
     {
       global: {
-        headers: { ...corsHeaders, Authorization: req.get("Authorization")! },
+        headers: { ...corsHeaders, Authorization: req.headers.get("Authorization")! },
       },
     }
   );
@@ -56,10 +56,8 @@ app.all('/', async (req: ExpressRequest, res: ExpressResponse) => {
   const databaseTableDTO = transformer.transformToDatabaseTableDTO(schemaId!);
 
   await dispatches.insertDatabaseTableDTO(databaseTableDTO);
-  return res.status(200).set({ ...corsHeaders, "Content-Type": "application/json" }).json(schemaId);
-});
-
-const port = parseInt(process.env.PORT || "8000");
-app.listen(port, () => {
-  console.log(`Function listening on port ${port}`);
+  return new Response(JSON.stringify(schemaId), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200,
+  });
 });
